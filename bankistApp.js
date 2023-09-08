@@ -66,12 +66,36 @@ const account3 = {
   movements: [200, -200, 340, -300, -20, 50, 400, -450],
   interestRate: 0.7,
   pin: 3333,
+  movementsDates: [
+    "2019-11-01T13:15:33.035Z",
+    "2019-11-30T09:48:16.867Z",
+    "2019-12-25T06:04:23.907Z",
+    "2020-01-25T14:18:46.235Z",
+    "2020-02-05T16:33:06.386Z",
+    "2020-04-10T14:43:26.374Z",
+    "2020-06-25T18:49:59.371Z",
+    "2023-09-05T12:01:20.894Z",
+  ],
+  currency: "USD",
+  locale: "en-US",
 };
 const account4 = {
   owner: "Sarah Smith",
   movements: [430, 1000, 700, 50, 90],
   interestRate: 1,
   pin: 4444,
+  movementsDates: [
+    "2019-11-01T13:15:33.035Z",
+    "2019-11-30T09:48:16.867Z",
+    "2019-12-25T06:04:23.907Z",
+    "2020-01-25T14:18:46.235Z",
+    "2020-02-05T16:33:06.386Z",
+    "2020-04-10T14:43:26.374Z",
+    "2020-06-25T18:49:59.371Z",
+    "2023-09-05T12:01:20.894Z",
+  ],
+  currency: "USD",
+  locale: "en-US",
 };
 
 const accounts = [account1, account2, account3, account4];
@@ -223,7 +247,37 @@ const updateUI = function (acc) {
   btnSort.classList.toggle("clicked");
 };
 
-let currentAccount;
+const startLogOutTimer = function () {
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
+
+    // In each call, print the remaining time to UI
+    labelTimer.textContent = `${min}:${sec}`;
+
+    // When timer is at 0 seconds, stop timer and log user
+    if (time === 0) {
+      clearInterval(timer);
+      containerApp.style.opacity = "0";
+      labelWelcome.textContent = "Log in to get started";
+    }
+
+    // Decrease 1 second
+    time--;
+  };
+
+  // Set time to 5 minutes
+  let time = 300;
+
+  // Immediately call the tick function so that once the user logs in again the timer immediately starts at 5 minutes and not the end of the time
+  tick();
+
+  // Call the timer every second
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
+let currentAccount, timer;
 let currentAccountPin;
 
 btnLogin.addEventListener("click", (e) => {
@@ -241,7 +295,15 @@ btnLogin.addEventListener("click", (e) => {
     containerApp.style.opacity = "100";
 
     // Create current date and time
-    const now = new Date();
+
+    setInterval(function () {
+      const now = new Date();
+      (labelDate.textContent = new Intl.DateTimeFormat(
+        currentAccount.locale,
+        options
+      ).format(now)),
+        `${now.getHours()}:${now.getMinutes()}`;
+    }, 1000);
 
     const options = {
       hour: "numeric",
@@ -251,11 +313,6 @@ btnLogin.addEventListener("click", (e) => {
       year: "numeric",
       // weekday: "long",
     };
-
-    labelDate.textContent = new Intl.DateTimeFormat(
-      currentAccount.locale,
-      options
-    ).format(now);
 
     // const day = `${now.getDate()}`.padStart(2, 0);
     // const month = `${now.getMonth() + 1}`.padStart(2, 0);
@@ -268,6 +325,10 @@ btnLogin.addEventListener("click", (e) => {
     // Clear Input Fields
     inputLoginUsername.value = inputLoginPin.value = "";
     inputLoginPin.blur(); // makes input field lose focus
+
+    // Eliminate multiple timers
+    if (timer) clearInterval(timer);
+    timer = startLogOutTimer();
 
     updateUI(currentAccount);
   }
@@ -297,7 +358,11 @@ btnTransfer.addEventListener("click", function (e) {
     currentAccount.movementsDates.push(new Date().toISOString());
     receiverAcc.movementsDates.push(new Date().toISOString());
 
-    updateUI(currentAccount);
+    setTimeout(() => updateUI(currentAccount), 4000);
+
+    // Reset Timer
+    clearInterval(timer);
+    timer = startLogOutTimer();
   }
 });
 
@@ -313,9 +378,14 @@ btnLoan.addEventListener("click", function (e) {
     // Add loan date
     currentAccount.movementsDates.push(new Date().toISOString());
 
-    updateUI(currentAccount);
+    setTimeout(() => updateUI(currentAccount), 4000);
+    // updateUI(currentAccount);
   }
   inputLoanAmount.value = "";
+
+  // Reset Timer
+  clearInterval(timer);
+  timer = startLogOutTimer();
 });
 
 // Close Account
